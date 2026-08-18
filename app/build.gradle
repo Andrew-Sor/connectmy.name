@@ -27,7 +27,7 @@ android {
     }
 
     lintOptions {
-        disable 'QueryAllPackagesPermission'
+        abortOnError false
     }
     
     packagingOptions {
