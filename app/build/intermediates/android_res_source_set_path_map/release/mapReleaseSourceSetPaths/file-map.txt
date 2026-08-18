@@ -1,0 +1,7 @@
+my.connect.hdmnm.app-pngs-0 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/generated/res/pngs/release
+my.connect.hdmnm.app-updated_navigation_xml-1 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/generated/updated_navigation_xml/release
+my.connect.hdmnm.app-packageReleaseResources-2 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+my.connect.hdmnm.app-packageReleaseResources-3 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+my.connect.hdmnm.app-release-4 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/intermediates/merged_res/release/mergeReleaseResources
+my.connect.hdmnm.app-main-5 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/src/main/res
+my.connect.hdmnm.app-release-6 /storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/src/release/res

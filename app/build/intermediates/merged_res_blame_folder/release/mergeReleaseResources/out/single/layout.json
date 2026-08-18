@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "my.connect.hdmnm.app-mergeReleaseResources-33:/layout/item_imap_account.xml",
+        "source": "my.connect.hdmnm.app-main-35:/layout/item_imap_account.xml"
+    },
+    {
+        "merged": "my.connect.hdmnm.app-mergeReleaseResources-33:/layout/activity_main.xml",
+        "source": "my.connect.hdmnm.app-main-35:/layout/activity_main.xml"
+    },
+    {
+        "merged": "my.connect.hdmnm.app-mergeReleaseResources-33:/layout/item_app.xml",
+        "source": "my.connect.hdmnm.app-main-35:/layout/item_app.xml"
+    },
+    {
+        "merged": "my.connect.hdmnm.app-mergeReleaseResources-33:/layout/activity_app_selector.xml",
+        "source": "my.connect.hdmnm.app-main-35:/layout/activity_app_selector.xml"
+    },
+    {
+        "merged": "my.connect.hdmnm.app-mergeReleaseResources-33:/layout/activity_settings.xml",
+        "source": "my.connect.hdmnm.app-main-35:/layout/activity_settings.xml"
+    }
+]

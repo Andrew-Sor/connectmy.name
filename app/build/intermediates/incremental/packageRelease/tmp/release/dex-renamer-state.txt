@@ -1,0 +1,7 @@
+#Tue Aug 18 12:37:17 GMT 2026
+base.0=/storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
+base.1=/storage/emulated/0/AndroidIDEProjects/ConnectMyName/app/build/intermediates/dex/release/mergeDexRelease/classes2.dex
+path.0=classes.dex
+path.1=classes2.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
