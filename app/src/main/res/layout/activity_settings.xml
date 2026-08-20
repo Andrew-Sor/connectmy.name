@@ -394,6 +394,54 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Дополнительно -->
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:animateLayoutChanges="true"
+>
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Для разработчиков"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorOnSurface"
+                        android:fontFamily="google-sans"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+                        
+                    
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swLaunncherMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:checked="false"
+                        android:text="Режим лаунчера"/>
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="При запуске проверяет не истёк ли последний код и запускает hidemy.name VPN."
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:fontFamily="google-sans"
+/>
+                    
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Для разработчиков -->
 
             <com.google.android.material.card.MaterialCardView

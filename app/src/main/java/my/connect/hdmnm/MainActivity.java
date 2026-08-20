@@ -33,6 +33,8 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -97,6 +99,9 @@ public class MainActivity extends AppCompatActivity {
         checkFirstRun(); // Приветствие
         loadEmails(); // Загрузка адресов почт из настроек
 
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        String successDateTime = prefs.getString("success_date_time", null);
+
         // Слушатели
         tvLog.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -133,6 +138,13 @@ public class MainActivity extends AppCompatActivity {
             });
             popup.show();
         });
+        
+        if(prefs.getBoolean("launcher_mode", false) && successDateTime != null) {
+            LocalDateTime succesDay = LocalDateTime.parse(successDateTime);
+            if(Duration.between(succesDay, LocalDateTime.now()).toMinutes() >= 24*60) {
+                openApp("com.fourksoft.openvpn");
+            }
+        }
     };
     
     // Запуск
@@ -394,6 +406,8 @@ public class MainActivity extends AppCompatActivity {
         if (html.contains("Перейти в почтовый ящик")) {
             appendLog("Успешно! Запуск Orbot...");
             boolean bypassOrbot = prefs.getBoolean("bypass_orbot", false);
+            prefs.edit().putString("success_date_time", LocalDateTime.now().toString()).apply();
+            
                 if(!bypassOrbot) {
                     showSystemToast("Отключите Tor.");
                     currentState = State.ORBOT_STOP;

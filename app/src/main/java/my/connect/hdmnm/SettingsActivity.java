@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.DynamicColors;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
@@ -56,6 +57,9 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String[] BROWSER_PRESETS = {"Яндекс Почта", "Gmail", "Mail.ru", "Своя"};
     private TextInputLayout tilBrowserUrl;
     private TextInputEditText etBrowserUrl;
+    
+    // Дополнительные настройки
+    private MaterialSwitch swLauncherMode;
     
     // Настройки для разработчиков
     private TextView tvCurrentIndex;
@@ -113,6 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
         tvSelectedCustomApp = findViewById(R.id.tvSelectedCustomApp);
         btnImportSettings = findViewById(R.id.btnImportSettings);
         btnExportSettings = findViewById(R.id.btnExportSettings);
+        swLauncherMode = findViewById(R.id.swLauncherMode);
 
         // Лончер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
@@ -126,7 +131,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         btnExportSettings.setOnClickListener(v -> {
             saveSettings(); // Сохраняем текущие введенные данные перед экспортом
-            exportLauncher.launch("settings_hdmnm.bak");
+            exportLauncher.launch("cmn.bak");
         });
 
         btnImportSettings.setOnClickListener(v -> importLauncher.launch(new String[]{"*/*"}));
@@ -316,6 +321,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
         updateTvCurrentIndex();
+        swLauncherMode.setChecked(prefs.getBoolean("launcher_mode", false));
     };
 
     @Override
@@ -355,6 +361,7 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putString("browser_url", etBrowserUrl.getText() != null ? etBrowserUrl.getText().toString().trim() : "");
 
         editor.putBoolean("bypass_orbot", cbBypassOrbot.isChecked());
+        editor.putBoolean("launcher_mode", swLauncherMode.isChecked());
 
         // Сохранение IMAP аккаунтов
         editor.putInt("imap_count", imapAccountViews.size());
