@@ -15,6 +15,8 @@
         <!-- Стартовый экран с кнопкой -->
         <activity
             android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:finishOnTaskLaunch="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
