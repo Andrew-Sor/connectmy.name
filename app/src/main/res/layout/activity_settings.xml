@@ -439,6 +439,13 @@
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:fontFamily="google-sans"
 />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/swExitOnEnd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:checked="true"
+                        android:text="Выход после запуска HDMN VPN"/>
                     
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

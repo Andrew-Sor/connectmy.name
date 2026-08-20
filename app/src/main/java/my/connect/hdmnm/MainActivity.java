@@ -15,6 +15,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -98,6 +99,13 @@ public class MainActivity extends AppCompatActivity {
 
         checkFirstRun(); // Приветствие
         loadEmails(); // Загрузка адресов почт из настроек
+        
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                System.exit(0);
+            };
+        });
         
         // Слушатели
         tvLog.setOnClickListener(v -> {
@@ -314,6 +322,9 @@ public class MainActivity extends AppCompatActivity {
                     showSystemToast("Выберите \"Активировать\" и \"Уже есть аккаунт. Войти\". Код подставится автоматически.");
                     appendLog("Конец лога.");
                     stopProcess();
+                    if(prefs.getBoolean("exit_on_end", true)) {
+                        System.exit(0);
+                    }
                             
                 } else {
                     appendLog("HDMNM VPN не установлен!");
@@ -539,6 +550,10 @@ public class MainActivity extends AppCompatActivity {
                                 showSystemToast("Выберите \"Активировать\" и \"Уже есть аккаунт. Войти\".");
                                 appendLog("Конец лога.");
                                 stopProcess();
+                                if(prefs.getBoolean("exit_on_end", true)) {
+                                System.exit(0);
+                                }
+                                
                             } else {
                                 appendLog("HDMNM VPN не установлен!");
                                 openPlayStore("com.fourksoft.openvpn");

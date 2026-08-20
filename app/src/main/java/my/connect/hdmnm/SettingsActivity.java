@@ -60,6 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
     
     // Дополнительные настройки
     private MaterialSwitch swLauncherMode;
+    private MaterialSwitch swExitOnEnd;
     
     // Настройки для разработчиков
     private TextView tvCurrentIndex;
@@ -88,7 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 validateAndExit();
-            }
+            };
         });
 
         emailInputs[0] = findViewById(R.id.etEmail1);
@@ -118,6 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnImportSettings = findViewById(R.id.btnImportSettings);
         btnExportSettings = findViewById(R.id.btnExportSettings);
         swLauncherMode = findViewById(R.id.swLauncherMode);
+        swExitOnEnd = findViewById(R.id.swExitOnEnd);
 
         // Лончер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
@@ -322,6 +324,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
         updateTvCurrentIndex();
         swLauncherMode.setChecked(prefs.getBoolean("launcher_mode", false));
+        swExitOnEnd.setChecked(prefs.getBoolean("exit_on_end", true));
     };
 
     @Override
@@ -362,6 +365,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         editor.putBoolean("bypass_orbot", cbBypassOrbot.isChecked());
         editor.putBoolean("launcher_mode", swLauncherMode.isChecked());
+        editor.putBoolean("exit_on_end", swExitOnEnd.isChecked());
 
         // Сохранение IMAP аккаунтов
         editor.putInt("imap_count", imapAccountViews.size());
