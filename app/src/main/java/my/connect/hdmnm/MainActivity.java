@@ -143,11 +143,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent arg0) {
         super.onNewIntent(arg0);
         
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        
-        if(prefs.getBoolean("launcher_mode", false)) {
-            auloLaunchHDMN();
-        }
+        auloLaunchHDMN();
     };
     
     // Запуск
@@ -595,7 +591,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String successDateTime = prefs.getString("success_date_time", null);
         
-        if(successDateTime != null) {
+        if(prefs.getBoolean("launcher_mode", false) && successDateTime != null) {
             LocalDateTime succesDay = LocalDateTime.parse(successDateTime);
             if(Duration.between(succesDay, LocalDateTime.now()).toMinutes() <= 24*60) {
                 openApp("com.fourksoft.openvpn");
