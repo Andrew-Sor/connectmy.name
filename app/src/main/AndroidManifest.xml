@@ -14,7 +14,7 @@
         
         <!-- Стартовый экран с кнопкой -->
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivit"
             android:clearTaskOnLaunch="true"
             android:finishOnTaskLaunch="true"
             android:exported="true">
