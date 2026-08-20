@@ -98,10 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
         checkFirstRun(); // Приветствие
         loadEmails(); // Загрузка адресов почт из настроек
-
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        String successDateTime = prefs.getString("success_date_time", null);
-
+        
         // Слушатели
         tvLog.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -139,11 +136,17 @@ public class MainActivity extends AppCompatActivity {
             popup.show();
         });
         
-        if(prefs.getBoolean("launcher_mode", false) && successDateTime != null) {
-            LocalDateTime succesDay = LocalDateTime.parse(successDateTime);
-            if(Duration.between(succesDay, LocalDateTime.now()).toMinutes() <= 24*60) {
-                openApp("com.fourksoft.openvpn");
-            }
+        auloLaunchHDMN();
+    };
+    
+    @Override
+    protected void onNewIntent(Intent arg0) {
+        super.onNewIntent(arg0);
+        
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        
+        if(prefs.getBoolean("launcher_mode", false)) {
+            auloLaunchHDMN();
         }
     };
     
@@ -586,6 +589,18 @@ public class MainActivity extends AppCompatActivity {
                 .setCancelable(false)
                 .show();
         };
+    };
+    
+    private void auloLaunchHDMN() {
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        String successDateTime = prefs.getString("success_date_time", null);
+        
+        if(successDateTime != null) {
+            LocalDateTime succesDay = LocalDateTime.parse(successDateTime);
+            if(Duration.between(succesDay, LocalDateTime.now()).toMinutes() <= 24*60) {
+                openApp("com.fourksoft.openvpn");
+            }
+        }
     };
     
     private void loadEmails() {
