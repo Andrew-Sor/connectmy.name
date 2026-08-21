@@ -146,7 +146,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .setMessage("В бэкапе в открытом виде хранятся все пароли от ваших IMAP аккаунтов! Храните его в надёжном месте и никому не передавайте!\nВы также можете очистить все поля с паролями перед сохранением файла.")
                 .setView(dialogView)
                 .setPositiveButton("Ок", (dialog, which) -> {
-                    prefs.edit().putBoolean("dont_show_backup_dialog", cbDontShowAgain.isChecked());
+                    prefs.edit().putBoolean("dont_show_backup_dialog", cbDontShowAgain.isChecked()).apply();
                     exportLauncher.launch("cmn.bak");
                 })
                 .setNegativeButton("Отмена", null)
