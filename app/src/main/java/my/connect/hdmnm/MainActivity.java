@@ -585,6 +585,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow(); // Принудительно завершаем фоновые задачи
+        mainHandler.removeCallbacksAndMessages(null); // Очищаем очередь хэндлера
+    }
+    
     // Остальные методы
 
     private void checkFirstRun() {

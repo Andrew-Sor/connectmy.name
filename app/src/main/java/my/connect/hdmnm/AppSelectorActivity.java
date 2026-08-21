@@ -36,6 +36,7 @@ public class AppSelectorActivity extends AppCompatActivity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // При создании
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
@@ -48,13 +49,13 @@ public class AppSelectorActivity extends AppCompatActivity {
 
         recyclerApps = findViewById(R.id.recyclerApps);
         progressApps = findViewById(R.id.progressApps);
-
+        
         recyclerApps.setLayoutManager(new LinearLayoutManager(this));
         adapter = new AppAdapter(new ArrayList<>(), this::onAppSelected);
         recyclerApps.setAdapter(adapter);
 
         loadApps();
-    }
+    };
 
     private void loadApps() {
         executor.execute(() -> {
@@ -81,7 +82,7 @@ public class AppSelectorActivity extends AppCompatActivity {
                 adapter.setApps(appList);
             });
         });
-    }
+    };
 
     private void onAppSelected(AppInfo app) {
         Intent resultIntent = new Intent();
@@ -89,9 +90,9 @@ public class AppSelectorActivity extends AppCompatActivity {
         resultIntent.putExtra("app_package", app.packageName);
         setResult(RESULT_OK, resultIntent);
         finish();
-    }
+    };
 
-    // --- Модель данных ---
+    // Модель данных
     private static class AppInfo {
         String name;
         String packageName;
@@ -101,34 +102,34 @@ public class AppSelectorActivity extends AppCompatActivity {
             this.name = name;
             this.packageName = packageName;
             this.icon = icon;
-        }
-    }
+        };
+    };
 
-    // --- Адаптер для RecyclerView ---
+    // Адаптер для RecyclerView
     private static class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
         private List<AppInfo> apps;
         private final OnAppClickListener listener;
 
         interface OnAppClickListener {
             void onClick(AppInfo app);
-        }
+        };
 
         AppAdapter(List<AppInfo> apps, OnAppClickListener listener) {
             this.apps = apps;
             this.listener = listener;
-        }
+        };
 
         void setApps(List<AppInfo> apps) {
             this.apps = apps;
             notifyDataSetChanged();
-        }
+        };
 
         @NonNull
         @Override
         public AppViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_app, parent, false);
             return new AppViewHolder(view);
-        }
+        };
 
         @Override
         public void onBindViewHolder(@NonNull AppViewHolder holder, int position) {
@@ -137,12 +138,12 @@ public class AppSelectorActivity extends AppCompatActivity {
             holder.tvAppPackage.setText(app.packageName);
             holder.ivAppIcon.setImageDrawable(app.icon);
             holder.itemView.setOnClickListener(v -> listener.onClick(app));
-        }
+        };
 
         @Override
         public int getItemCount() {
             return apps.size();
-        }
+        };
 
         static class AppViewHolder extends RecyclerView.ViewHolder {
             TextView tvAppName, tvAppPackage;
@@ -154,6 +155,13 @@ public class AppSelectorActivity extends AppCompatActivity {
                 tvAppPackage = itemView.findViewById(R.id.tvAppPackage);
                 ivAppIcon = itemView.findViewById(R.id.ivAppIcon);
             }
-        }
-    }
+        };
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
+        mainHandler.removeCallbacksAndMessages(null);
+    };
 }

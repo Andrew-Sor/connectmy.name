@@ -123,12 +123,12 @@ public class SettingsActivity extends AppCompatActivity {
         swLauncherMode = findViewById(R.id.swLauncherMode);
         swExitOnEnd = findViewById(R.id.swExitOnEnd);
 
-        // Лончер для сохранения файла
+        // Лаунчер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
             if (uri != null) exportSettingsToFile(uri);
         });
 
-        // Лончер для открытия файла
+        // Лаунчер для открытия файла
         importLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) importSettingsFromFile(uri);
         });
@@ -216,12 +216,12 @@ public class SettingsActivity extends AppCompatActivity {
             tvDynamicSettingsTitle.setText("Настройки IMAP");
             layoutImapSettings.setVisibility(View.VISIBLE);
             layoutAppSettings.setVisibility(View.GONE);
-            layoutBrowserSettings.setVisibility(View.GONE); // Добавлено
+            layoutBrowserSettings.setVisibility(View.GONE);
         } else if ("Приложение".equals(mode)) {
             tvDynamicSettingsTitle.setText("Настройки приложения");
             layoutImapSettings.setVisibility(View.GONE);
             layoutAppSettings.setVisibility(View.VISIBLE);
-            layoutBrowserSettings.setVisibility(View.GONE); // Добавлено
+            layoutBrowserSettings.setVisibility(View.GONE);
         } else if ("Браузер".equals(mode)) {
             tvDynamicSettingsTitle.setText("Настройки браузера");
             layoutImapSettings.setVisibility(View.GONE);
@@ -328,7 +328,7 @@ public class SettingsActivity extends AppCompatActivity {
                 addImapAccountView(oldEmail, prefs.getString("imap_password", ""), prefs.getString("imap_preset", "Яндекс Почта"),
                         prefs.getString("imap_host", "imap.yandex.ru"), prefs.getString("imap_port", "993"), prefs.getString("imap_security", "SSL/TLS"));
             } else {
-                addImapAccountView("", "", "Яндекс Почта", "imap.yandex.ru", "993", "SSL/TLS"); // Дефолтный 1 аккаунт
+                addImapAccountView("", "", "Яндекс Почта", "imap.yandex.ru", "993", "SSL/TLS"); // Дефолтный 1-й аккаунт
             }
         } else {
             for (int i = 0; i < imapCount; i++) {
