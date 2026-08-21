@@ -13,7 +13,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.color.DynamicColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -130,10 +132,29 @@ public class SettingsActivity extends AppCompatActivity {
         importLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) importSettingsFromFile(uri);
         });
+        
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
 
         btnExportSettings.setOnClickListener(v -> {
             saveSettings(); // Сохраняем текущие введенные данные перед экспортом
-            exportLauncher.launch("cmn.bak");
+            
+            if(!prefs.getBoolean("dont_show_backup_dialog", false)) {
+                View dialogView = getLayoutInflater().inflate(R.layout.dg_cb_not_show, null);
+            MaterialCheckBox cbDontShowAgain = dialogView.findViewById(R.id.cbDontShowAgain);
+            new MaterialAlertDialogBuilder(this)
+                .setTitle("Внимание!")
+                .setMessage("В бэкапе в открытом виде хранятся все пароли от ваших IMAP аккаунтов! Храните его в надёжном месте и никому не передавайте!\nВы также можете очистить все поля с паролями перед сохранением файла.")
+                .setView(dialogView)
+                .setPositiveButton("Ок", (dialog, which) -> {
+                    prefs.edit().putBoolean("dont_show_backup_dialog", cbDontShowAgain.isChecked());
+                    exportLauncher.launch("cmn.bak");
+                })
+                .setNegativeButton("Отмена", null)
+                .setCancelable(true)
+                .show();
+            } else {
+                exportLauncher.launch("cmn.bak");
+            }
         });
 
         btnImportSettings.setOnClickListener(v -> importLauncher.launch(new String[]{"*/*"}));
@@ -161,7 +182,6 @@ public class SettingsActivity extends AppCompatActivity {
         });
         
         btnAddMailIndex.setOnClickListener(v -> {
-            SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
             int curI = prefs.getInt("email_index", 0);
             int index = (curI + 1) % MainActivity.Emails.length;
             prefs.edit().putInt("email_index", index).apply();
