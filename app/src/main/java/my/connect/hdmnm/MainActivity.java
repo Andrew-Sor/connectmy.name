@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                     showSystemToast("Раздел 'Справка' в разработке");
                     return true;
                 } else if (item.getItemId() == R.id.action_about) {
-                    showSystemToast("Раздел 'О приложении' в разработке");
+                    startActivity(new Intent(MainActivity.this, AboutActivity.class));
                     return true;
                 }
                 return false;
