@@ -282,12 +282,6 @@ public class MainActivity extends AppCompatActivity {
                         onTorReady();
                     }
                 }
-                @Override public void circuitStatus(String status) {}
-                @Override public void streamStatus(String status, String streamID, String target) {}
-                @Override public void orConnStatus(String status, String orName) {}
-                @Override public void bandwidthUsed(long read, long written) {}
-                @Override public void newDescriptors(List<String> orList) {}
-                @Override public void unrecognized(String type, String msg) {}
             });
             conn.setEvents(java.util.Arrays.asList("STATUS_CLIENT"));
             
