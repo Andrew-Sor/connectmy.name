@@ -228,7 +228,10 @@ public class MainActivity extends AppCompatActivity {
         executor.execute(() -> {
             try {
                 SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-                String bridge = prefs.getString("tor_bridge", ""); 
+                
+                // Твой мост стоит по умолчанию, если в настройках ничего не введено
+                String defaultBridge = "obfs4 31.171.241.238:8414 811115E721E9B530A3BA41D3FCE6B71D64E4DC5A cert=Sye+7gmUheN9ohPm8TV1pyNiuMwr4NMAKJXC3p6Du8m56VyorhG6S7u2NgklFS91rwpKBA iat-mode=0";
+                String bridge = prefs.getString("tor_bridge", defaultBridge); 
                 
                 File torrc = buildTorrc(bridge);
                 mainHandler.post(() -> appendLog("Запуск службы Tor..."));
@@ -237,8 +240,8 @@ public class MainActivity extends AppCompatActivity {
                 torIntent.putExtra("torrc", torrc.getAbsolutePath());
                 startService(torIntent);
 
-                // Запускаем отслеживание bootstrap (15 попыток с интервалом в 1 сек)
-                monitorTorBootstrap(15);
+                // Увеличили таймаут: 120 попыток с паузой в 1 секунду = 2 минуты на подключение
+                monitorTorBootstrap(120);
             } catch (Exception e) {
                 mainHandler.post(() -> {
                     appendLog("Ошибка конфигурации Tor: " + e.getMessage());
