@@ -203,8 +203,14 @@ public class MainActivity extends AppCompatActivity {
         File torDir = getDir("tordata", MODE_PRIVATE);
         File torrcFile = new File(torDir, "torrc");
         File cookieFile = new File(torDir, "control_auth_cookie");
-        String nativeDir = getApplicationInfo().nativeLibraryDir;
         
+        // Создаем рабочую директорию для obfs4
+        File ptDir = new File(torDir, "pt_state");
+        if (!ptDir.exists()) ptDir.mkdirs();
+
+        String nativeDir = getApplicationInfo().nativeLibraryDir;
+        File obfs4Proxy = new File(nativeDir, "libobfs4proxy.so");
+
         StringBuilder config = new StringBuilder();
         config.append("DataDirectory ").append(torDir.getAbsolutePath()).append("\n");
         config.append("SocksPort 9050\n");
@@ -212,15 +218,26 @@ public class MainActivity extends AppCompatActivity {
         config.append("CookieAuthentication 1\n");
         config.append("CookieAuthFile ").append(cookieFile.getAbsolutePath()).append("\n");
         
+        // Включаем подробный лог Tor в файл
+        File logFile = new File(torDir, "tor_log.txt");
+        config.append("Log notice file ").append(logFile.getAbsolutePath()).append("\n");
+
         if (bridgeLine != null && !bridgeLine.trim().isEmpty()) {
             config.append("UseBridges 1\n");
-            config.append("ClientTransportPlugin obfs4 exec ").append(nativeDir).append("/libobfs4proxy.so\n");
+            // Прописываем путь к плагину. Если extractNativeLibs сработает, файл будет тут
+            config.append("ClientTransportPlugin obfs4 exec ").append(obfs4Proxy.getAbsolutePath()).append("\n");
             config.append("Bridge ").append(bridgeLine.trim()).append("\n");
         }
 
         try (FileOutputStream fos = new FileOutputStream(torrcFile)) {
             fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
         }
+        
+        // Предупреждение в наш UI лог, если библиотека не распаковалась
+        if (bridgeLine != null && !bridgeLine.trim().isEmpty() && !obfs4Proxy.exists()) {
+            mainHandler.post(() -> appendLog("ВНИМАНИЕ: Файл " + obfs4Proxy.getName() + " не найден в системе!"));
+        }
+
         return torrcFile;
     }
 
