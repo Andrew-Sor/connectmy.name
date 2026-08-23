@@ -36,6 +36,9 @@ android {
         exclude 'META-INF/LICENSE.md'
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/LICENSE.txt'
+        jniLibs {
+            useLegacyPackaging true
+        }
     }
 
     signingConfigs {
