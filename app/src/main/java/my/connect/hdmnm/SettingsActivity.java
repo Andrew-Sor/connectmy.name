@@ -30,6 +30,10 @@ public class SettingsActivity extends AppCompatActivity {
     // Список адресов почт
     private TextInputEditText[] emailInputs = new TextInputEditText[7];
     
+    // Настройки Tor
+    private TextInputLayout tilTorBridge;
+    private TextInputEditText etTorBridge;
+    
     // Выбор режима
     private AutoCompleteTextView spinnerExtractionMode;
     private final String[] extractionModes = {"IMAP", "Приложение", "Браузер"};
@@ -122,6 +126,8 @@ public class SettingsActivity extends AppCompatActivity {
         btnExportSettings = findViewById(R.id.btnExportSettings);
         swLauncherMode = findViewById(R.id.swLauncherMode);
         swExitOnEnd = findViewById(R.id.swExitOnEnd);
+        tilTorBridge = findViewById(R.id.tilTorBridge);
+        etTorBridge = findViewById(R.id.etTorBridge);
 
         // Лаунчер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
@@ -302,6 +308,9 @@ public class SettingsActivity extends AppCompatActivity {
             emailInputs[i].setText(prefs.getString("email_" + i, MainActivity.Emails[i]));
         }
         
+        // Загрузка настроек Tor
+        etTorBridge.setText(prefs.getString("tor_bridge", ""));
+        
         // Загрузка настроек режима "Приложение"
         int savedAppIndex = prefs.getInt("app_preset_index", 0);
         if (savedAppIndex >= APP_PRESETS.length) savedAppIndex = 0; // Защита от выхода за пределы массива при изменении длины
@@ -357,6 +366,11 @@ public class SettingsActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         
+        // Сохранение настроек Tor
+        String bridgeText = etTorBridge.getText() != null ? etTorBridge.getText().toString().trim() : "";
+        editor.putString("tor_bridge", bridgeText);
+        
+        // Сохранение настроек извлечения кода
         editor.putString("extraction_mode", spinnerExtractionMode.getText().toString());
         
         // Сохранение настроек режима "Приложение"

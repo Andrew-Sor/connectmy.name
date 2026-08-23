@@ -59,11 +59,11 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.material
     implementation libs.androidx.constraintlayout
-    dependencies {
     
-    implementation 'com.sun.mail:android-mail:1.6.8'
-    implementation 'com.sun.mail:android-activation:1.6.8'
+    dependencies {
+        implementation 'com.sun.mail:android-mail:1.6.8'
+        implementation 'com.sun.mail:android-activation:1.6.8'
         implementation("info.guardianproject:tor-android:0.4.9.11")
         implementation("info.guardianproject:jtorctl:0.4.5.7")
-}
+    }
 }

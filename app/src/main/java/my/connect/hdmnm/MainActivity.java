@@ -24,6 +24,9 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Authenticator;
@@ -31,9 +34,11 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
+import java.net.Socket;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,6 +60,10 @@ import javax.mail.search.FlagTerm;
 import javax.mail.search.FromStringTerm;
 import javax.mail.search.SearchTerm;
 
+// Импорты jtorctl
+import net.freehaven.tor.control.TorControlConnection;
+import net.freehaven.tor.control.EventHandler;
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvLog;
@@ -66,26 +75,15 @@ public class MainActivity extends AppCompatActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
     public enum State {
-        IDLE, RUNNING, ORBOT_START, PROCESSING, ORBOT_STOP, MAIL, VPN
+        IDLE, RUNNING, TOR_START, PROCESSING, EXTRACTION, MAIL, VPN
     };
     
-    // Выполнение, состояние и попытка
     public volatile boolean isRunning = false;
     public State currentState = State.IDLE;
     public int attemptCount = 1;
     
-    // Адреса почт
-    public static String[] Emails = {
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-    };
+    public static String[] Emails = { "", "", "", "", "", "", "" };
     
-    // При создании
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this);
@@ -97,8 +95,8 @@ public class MainActivity extends AppCompatActivity {
         btnStartStop = findViewById(R.id.btnStartStop);
         btnMenu = findViewById(R.id.btnMenu);
 
-        checkFirstRun(); // Приветствие
-        loadEmails(); // Загрузка адресов почт из настроек
+        checkFirstRun();
+        loadEmails();
         
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -107,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
             };
         });
         
-        // Слушатели
         tvLog.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText("HDMNM Log", tvLog.getText().toString());
@@ -126,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         btnMenu.setOnClickListener(v -> {
-            androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(MainActivity.this, v);
+            PopupMenu popup = new PopupMenu(MainActivity.this, v);
             popup.getMenuInflater().inflate(R.menu.main_menu, popup.getMenu());
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == R.id.action_settings) {
@@ -150,48 +147,40 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent arg0) {
         super.onNewIntent(arg0);
-        
         auloLaunchHDMN();
     };
     
-    // Запуск
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadEmails();
+        // Вся логика переходов из onResume удалена, так как встроенный Tor 
+        // работает в фоне и не требует выхода из Activity.
+    }
+    
     private void startProcess() {
         isRunning = true;
         attemptCount = 1;
         updateUiState(true);
-        tvLog.setText("Запуск...");
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        boolean bypassOrbot = prefs.getBoolean("bypass_orbot", false);
-                if(!bypassOrbot) {
-                    if (isAppInstalled("org.torproject.android")) {
-                        appendLog("Запуск Orbot...");
-                        showSystemToast("Подключитесь к Tor.");
-                        currentState = State.ORBOT_START;
-                        openApp("org.torproject.android");
-                    } else {
-                        appendLog("Orbot не установлен!");
-                        showSystemToast("Установите Orbot и вернитесь.");
-                        currentState = State.RUNNING;
-                        openPlayStore("org.torproject.android");
-                    };
-                } else {
-                    currentState = State.ORBOT_START;
-                    onResume();
-                }
+        tvLog.setText("Инициализация...");
+        currentState = State.TOR_START;
+        startEmbeddedTor();
     };
 
-    // Остановка
     private void stopProcess() {
         isRunning = false;
         currentState = State.IDLE;
         updateUiState(false);
+        
+        // Останавливаем службу Tor принудительно
+        stopService(new Intent(this, org.torproject.jni.TorService.class));
+        
         if (tvLog.getText().toString().contains("Успешно!")) {
             incrementEmailIndex();
-        };
+        }
         appendLog("\nОстановка...");
     };
 
-    // Изменение кнопки старта
     private void updateUiState(boolean active) {
         btnStartStop.setText(active ? "Стоп" : "Получить код");
 
@@ -208,138 +197,126 @@ public class MainActivity extends AppCompatActivity {
         };
     };
 
-    // При возвращении
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadEmails(); // Загрузка адресов почт из настроек
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        
-        if (!isRunning) return; 
+    // --- НАЧАЛО БЛОКА ТOR ---
 
-        switch (currentState) {
-            case RUNNING:
-                boolean bypassOrbot = prefs.getBoolean("bypass_orbot", false);
-                if(!bypassOrbot) {
-                    if (isAppInstalled("org.torproject.android")) {
-                        appendLog("Запуск Orbot...");
-                        showSystemToast("Подключитесь к Tor.");
-                        currentState = State.ORBOT_START;
-                        openApp("org.torproject.android");
-                    } else {
-                        appendLog("Orbot не установлен!");
-                        showSystemToast("Установите Orbot и вернитесь.");
-                        openPlayStore("org.torproject.android");
-                    };
-                } else {
-                    currentState = State.ORBOT_START;
-                    onResume();
+    private File buildTorrc(String bridgeLine) throws IOException {
+        File torDir = getDir("tordata", MODE_PRIVATE);
+        File torrcFile = new File(torDir, "torrc");
+        File cookieFile = new File(torDir, "control_auth_cookie");
+        String nativeDir = getApplicationInfo().nativeLibraryDir;
+        
+        StringBuilder config = new StringBuilder();
+        config.append("DataDirectory ").append(torDir.getAbsolutePath()).append("\n");
+        config.append("SocksPort 9050\n");
+        config.append("ControlPort 9051\n");
+        config.append("CookieAuthentication 1\n");
+        config.append("CookieAuthFile ").append(cookieFile.getAbsolutePath()).append("\n");
+        
+        if (bridgeLine != null && !bridgeLine.trim().isEmpty()) {
+            config.append("UseBridges 1\n");
+            config.append("ClientTransportPlugin obfs4 exec ").append(nativeDir).append("/libobfs4proxy.so\n");
+            config.append("Bridge ").append(bridgeLine.trim()).append("\n");
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(torrcFile)) {
+            fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        return torrcFile;
+    }
+
+    private void startEmbeddedTor() {
+        executor.execute(() -> {
+            try {
+                SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String bridge = prefs.getString("tor_bridge", ""); 
+                
+                File torrc = buildTorrc(bridge);
+                mainHandler.post(() -> appendLog("Запуск службы Tor..."));
+                
+                Intent torIntent = new Intent(this, org.torproject.jni.TorService.class);
+                torIntent.putExtra("torrc", torrc.getAbsolutePath());
+                startService(torIntent);
+
+                // Запускаем отслеживание bootstrap (15 попыток с интервалом в 1 сек)
+                monitorTorBootstrap(15);
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    appendLog("Ошибка конфигурации Tor: " + e.getMessage());
+                    stopProcess();
+                });
+            }
+        });
+    }
+
+    private void monitorTorBootstrap(int retriesLeft) {
+        if (!isRunning) return;
+        if (retriesLeft == 0) {
+            mainHandler.post(() -> {
+                appendLog("Таймаут ожидания подключения к Tor.");
+                stopProcess();
+            });
+            return;
+        }
+
+        try {
+            Socket controlSocket = new Socket("127.0.0.1", 9051);
+            TorControlConnection conn = new TorControlConnection(controlSocket);
+            
+            File torDir = getDir("tordata", MODE_PRIVATE);
+            File cookieFile = new File(torDir, "control_auth_cookie");
+            
+            if (!cookieFile.exists()) {
+                controlSocket.close();
+                Thread.sleep(1000);
+                monitorTorBootstrap(retriesLeft - 1);
+                return;
+            }
+            
+            byte[] cookie = Files.readAllBytes(cookieFile.toPath());
+            conn.authenticate(cookie);
+
+            conn.setEventHandler(new EventHandler() {
+                @Override
+                public void message(String type, String msg) {
+                    if ("STATUS_CLIENT".equals(type) && msg.contains("BOOTSTRAP PROGRESS=100")) {
+                        onTorReady();
+                    }
                 }
-                break;
-            case ORBOT_START:
+                @Override public void circuitStatus(String status) {}
+                @Override public void streamStatus(String status, String streamID, String target) {}
+                @Override public void orConnStatus(String status, String orName) {}
+                @Override public void bandwidthUsed(long read, long written) {}
+                @Override public void newDescriptors(List<String> orList) {}
+                @Override public void unrecognized(String type, String msg) {}
+            });
+            conn.setEvents(java.util.Arrays.asList("STATUS_CLIENT"));
+            
+            String phase = conn.getInfo("status/bootstrap-phase");
+            if (phase != null && phase.contains("PROGRESS=100")) {
+                onTorReady();
+            } else {
+                mainHandler.post(() -> appendLog("Tor: " + (phase != null ? phase : "Подключение...")));
+            }
+        } catch (Exception e) {
+            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            monitorTorBootstrap(retriesLeft - 1);
+        }
+    }
+
+    private void onTorReady() {
+        mainHandler.post(() -> {
+            if (currentState == State.TOR_START) {
+                appendLog("Tor успешно подключен (100%)!");
                 currentState = State.PROCESSING;
                 int emailIndex = getEmailIndex();
                 appendLog(String.format("Почта (%d): %s...", emailIndex, Emails[emailIndex]));
                 executePostRequest();
-                break;
+            }
+        });
+    }
 
-            case ORBOT_STOP:
-                String mode = prefs.getString("extraction_mode", "IMAP");
-                
-                if ("IMAP".equals(mode)) {
-                    currentState = State.MAIL;
-                    appendLog("Подключение к почте (IMAP)...");
-                    showSystemToast("Поиск кода...");
-                    checkEmailForCode(1);
-                } else if ("Приложение".equals(mode)) {
-                    int appIndex = prefs.getInt("app_preset_index", 0);
-                    boolean openPlayStore = prefs.getBoolean("app_open_playstore", true);
-                    
-                    if (appIndex >= SettingsActivity.APP_PRESETS.length) appIndex = 0; 
-
-                    String targetName = SettingsActivity.APP_PRESETS[appIndex];
-                    String targetPackage;
-
-                    // Если выбрано "Свой", берем пакет из сохраненного кастома
-                    if ("Свой".equals(targetName)) {
-                        targetPackage = prefs.getString("custom_app_package", "");
-                        targetName = prefs.getString("custom_app_name", "Своё приложение");
-                    } else {
-                        targetPackage = SettingsActivity.APP_PACKAGES[appIndex];
-                    }
-
-                    if (targetPackage.isEmpty()) {
-                        appendLog("Пользовательское приложение не выбрано!");
-                        showSystemToast("Выберите приложение в настройках.");
-                        stopProcess();
-                        return;
-                    }
-
-                    if (isAppInstalled(targetPackage)) {
-                        appendLog("Запуск " + targetName + "...");
-                        showSystemToast("Скопируйте код и вернитесь.");
-                        currentState = State.VPN;
-                        openApp(targetPackage);
-                    } else {
-                        appendLog(targetName + " не установлена!");
-                        if (openPlayStore) {
-                            showSystemToast("Установите приложение и вернитесь.");
-                            openPlayStore(targetPackage);
-                        } else {
-                            showSystemToast(targetName + " не найдена.");
-                            stopProcess();
-                        }
-                    }
-                } else if ("Браузер".equals(mode)) {
-                    String url = prefs.getString("browser_url", "https://mail.yandex.ru");
-                    
-                    if (url.isEmpty()) {
-                        appendLog("Ошибка: Адрес почты не указан!");
-                        showSystemToast("Укажите Web-адрес в настройках.");
-                        stopProcess();
-                        return;
-                    }
-                    
-                    // Если пользователь в режиме "Своя" ввел адрес без http/https, добавляем (иначе браузер не откроется)
-                    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                        url = "https://" + url;
-                    }
-
-                    currentState = State.VPN;
-                    appendLog("Открытие почты в браузере...");
-                    openBrowser(url);
-                }
-                break;
-
-            case MAIL:
-                // Ничего не делаем
-                break;
-
-            case VPN:
-                if (isAppInstalled("com.fourksoft.openvpn")) {
-                    appendLog("Запуск HDMNM VPN...");
-                    openApp("com.fourksoft.openvpn");
-                    showSystemToast("Выберите \"Активировать\" и \"Уже есть аккаунт. Войти\". Код подставится автоматически.");
-                    appendLog("Конец лога.");
-                    stopProcess();
-                    if(prefs.getBoolean("exit_on_end", true)) {
-                        System.exit(0);
-                    }
-                            
-                } else {
-                    appendLog("HDMNM VPN не установлен!");
-                    openPlayStore("com.fourksoft.openvpn");
-                    showSystemToast("Установите Hidemy.name VPN и вернитесь.");
-                }
-                break;
-                
-            case PROCESSING:
-            case IDLE:
-                break;
-        };
-    };
+    // --- КОНЕЦ БЛОКА ТOR ---
     
-    // Запрос кода со сменой IP
     private void executePostRequest() {
         if (!isRunning) return;
 
@@ -408,24 +385,18 @@ public class MainActivity extends AppCompatActivity {
         });
     };
     
-    // Проверка ответа
     private void handleResponse(String html) {
         if (!isRunning) return;
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
 
         if (html.contains("Перейти в почтовый ящик")) {
-            appendLog("Успешно! Запуск Orbot...");
-            boolean bypassOrbot = prefs.getBoolean("bypass_orbot", false);
+            appendLog("Успешно! Отключение Tor...");
             prefs.edit().putString("success_date_time", LocalDateTime.now().toString()).apply();
             
-                if(!bypassOrbot) {
-                    showSystemToast("Отключите Tor.");
-                    currentState = State.ORBOT_STOP;
-                    openApp("org.torproject.android");
-                } else {
-                    currentState = State.ORBOT_STOP;
-                    onResume();
-                }
+            // Выключаем встроенный Tor перед парсингом почты
+            stopService(new Intent(this, org.torproject.jni.TorService.class));
+            
+            startExtractionFlow();
 
         } else if (html.contains("Тестовый доступ")) {
             attemptCount++;
@@ -439,11 +410,78 @@ public class MainActivity extends AppCompatActivity {
         };
     };
 
-    // IMAP
+    // Весь старый код из onResume переехал сюда
+    private void startExtractionFlow() {
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        String mode = prefs.getString("extraction_mode", "IMAP");
+        currentState = State.EXTRACTION;
+        
+        if ("IMAP".equals(mode)) {
+            currentState = State.MAIL;
+            appendLog("Подключение к почте (IMAP)...");
+            showSystemToast("Поиск кода...");
+            checkEmailForCode(1);
+        } else if ("Приложение".equals(mode)) {
+            int appIndex = prefs.getInt("app_preset_index", 0);
+            boolean openPlayStore = prefs.getBoolean("app_open_playstore", true);
+            
+            if (appIndex >= SettingsActivity.APP_PRESETS.length) appIndex = 0; 
+
+            String targetName = SettingsActivity.APP_PRESETS[appIndex];
+            String targetPackage;
+
+            if ("Свой".equals(targetName)) {
+                targetPackage = prefs.getString("custom_app_package", "");
+                targetName = prefs.getString("custom_app_name", "Своё приложение");
+            } else {
+                targetPackage = SettingsActivity.APP_PACKAGES[appIndex];
+            }
+
+            if (targetPackage.isEmpty()) {
+                appendLog("Пользовательское приложение не выбрано!");
+                showSystemToast("Выберите приложение в настройках.");
+                stopProcess();
+                return;
+            }
+
+            if (isAppInstalled(targetPackage)) {
+                appendLog("Запуск " + targetName + "...");
+                showSystemToast("Скопируйте код и вернитесь.");
+                currentState = State.VPN;
+                openApp(targetPackage);
+            } else {
+                appendLog(targetName + " не установлена!");
+                if (openPlayStore) {
+                    showSystemToast("Установите приложение и вернитесь.");
+                    openPlayStore(targetPackage);
+                } else {
+                    showSystemToast(targetName + " не найдена.");
+                    stopProcess();
+                }
+            }
+        } else if ("Браузер".equals(mode)) {
+            String url = prefs.getString("browser_url", "https://mail.yandex.ru");
+            
+            if (url.isEmpty()) {
+                appendLog("Ошибка: Адрес почты не указан!");
+                showSystemToast("Укажите Web-адрес в настройках.");
+                stopProcess();
+                return;
+            }
+            
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "https://" + url;
+            }
+
+            currentState = State.VPN;
+            appendLog("Открытие почты в браузере...");
+            openBrowser(url);
+        }
+    }
+
     private void checkEmailForCode(int attempt) {
         if (!isRunning) return;
 
-        // Ограничение количества попыток
         if (attempt > 5) {
             mainHandler.post(() -> {
                 appendLog("Лимит попыток!");
@@ -464,10 +502,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            // Формируем порядок проверки аккаунтов
             List<Integer> orderToCheck = new ArrayList<>();
             if (imapCount == 7) {
-                int targetIndex = getEmailIndex(); // Индекс текущей запрашиваемой почты
+                int targetIndex = getEmailIndex();
                 orderToCheck.add(targetIndex);
                 for (int i = 0; i < 7; i++) {
                     if (i != targetIndex) {
@@ -482,7 +519,6 @@ public class MainActivity extends AppCompatActivity {
 
             boolean codeFound = false;
 
-            // Итеративно проходим по сформированному списку почт
             for (int i = 0; i < orderToCheck.size(); i++) {
                 if (!isRunning) return;
 
@@ -494,7 +530,7 @@ public class MainActivity extends AppCompatActivity {
                 String imapSecurity = prefs.getString("imap_security_" + accountIndex, "SSL/TLS");
 
                 if (imapEmail.isEmpty() || imapPassword.isEmpty() || imapHost.isEmpty()) {
-                    continue; // Пропускаем недозаполненные настройки
+                    continue; 
                 }
 
                 mainHandler.post(() -> appendLog("Проверка: " + imapEmail + "..."));
@@ -508,7 +544,7 @@ public class MainActivity extends AppCompatActivity {
                     props.put("mail.store.protocol", protocol);
                     props.put("mail." + protocol + ".host", imapHost);
                     props.put("mail." + protocol + ".port", imapPort);
-                    props.put("mail." + protocol + ".connectiontimeout", "8000"); // Слегка уменьшил таймаут для ускорения перебора
+                    props.put("mail." + protocol + ".connectiontimeout", "8000");
                     props.put("mail." + protocol + ".timeout", "8000");
 
                     if ("SSL/TLS".equals(imapSecurity)) {
@@ -551,7 +587,7 @@ public class MainActivity extends AppCompatActivity {
                                 appendLog("Конец лога.");
                                 stopProcess();
                                 if(prefs.getBoolean("exit_on_end", true)) {
-                                System.exit(0);
+                                    System.exit(0);
                                 }
                                 
                             } else {
@@ -571,11 +607,9 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception ignored) {}
                 }
 
-                // Если код найден, выходим из цикла перебора почт
                 if (codeFound) break; 
             }
 
-            // Если прошли все почты и ничего не нашли, ждем 3 сек и начинаем новую попытку поиска
             if (!codeFound && isRunning) {
                 mainHandler.post(() -> {
                     appendLog("Попытка поиска " + attempt + " завершена. Ожидание...");
@@ -588,19 +622,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        executor.shutdownNow(); // Принудительно завершаем фоновые задачи
-        mainHandler.removeCallbacksAndMessages(null); // Очищаем очередь хэндлера
+        stopService(new Intent(this, org.torproject.jni.TorService.class));
+        executor.shutdownNow();
+        mainHandler.removeCallbacksAndMessages(null); 
     }
     
-    // Остальные методы
-
     private void checkFirstRun() {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         boolean isFirstRun = prefs.getBoolean("is_first_run", true);
         if (isFirstRun) {
             new MaterialAlertDialogBuilder(this)
                 .setTitle("connectmy.name")
-                .setMessage("Это приложение позволяет получать неограниченное количество пробных периодов для hidemy.name VPN каждый день!\nРекомендуется заранее установить Orbot и hidemy.name VPN.")
+                .setMessage("Это приложение позволяет получать неограниченное количество пробных периодов для hidemy.name VPN каждый день!\nВстроенный Tor запускается автоматически.")
                 .setPositiveButton("Ок", (dialog, which) -> {
                     prefs.edit().putBoolean("is_first_run", false).apply();
                 })
