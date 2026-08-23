@@ -60,8 +60,7 @@ dependencies {
     implementation libs.material
     implementation libs.androidx.constraintlayout
     dependencies {
-    
-    implementation 'com.sun.mail:android-mail:1.6.8'
-    implementation 'com.sun.mail:android-activation:1.6.8'
-}
+        implementation 'com.sun.mail:android-mail:1.6.8'
+        implementation 'com.sun.mail:android-activation:1.6.8'
+    }
 }
