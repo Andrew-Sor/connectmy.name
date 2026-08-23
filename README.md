@@ -5,7 +5,7 @@
 </h1>
 <p align="center">Приложение для Android для получения неограниченного количества тестовых периодов для hidemy.name VPN и автоматизации этого процесса. Для работы требуется Orbot.</p>
 
-## Скриншотыa
+## Скриншоты
 
 <p align="center">
   <img height="720" alt="Screenshot_20260818-001150" src="https://github.com/user-attachments/assets/6cad29f4-53b0-4982-baba-f5da2c308d51" />
