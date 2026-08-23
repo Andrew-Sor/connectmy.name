@@ -40,7 +40,6 @@ android {
 
     signingConfigs {
         release {
-            // Используем переменные окружения
             storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore/debug.keystore")
             storePassword System.getenv("KEYSTORE_PASSWORD")
             keyAlias System.getenv("KEY_ALIAS")
@@ -51,7 +50,6 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            // другие настройки (proguard, etc.)
         }
     }
 }
