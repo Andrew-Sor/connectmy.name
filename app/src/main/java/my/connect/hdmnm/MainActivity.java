@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         
         // Останавливаем IPtProxy
         try {
-            IPtProxy.stopLyrebird(); // или stopObfs4Proxy()
+            IPtProxy.stopObfs4Proxy(); // или stopObfs4Proxy()
         } catch (Throwable ignored) {}
         
         if (tvLog.getText().toString().contains("Успешно!")) {
@@ -208,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
 
     private File buildTorrc(String bridgeLine) throws IOException {
         File torDir = getDir("tordata", MODE_PRIVATE);
+        File torrc = getDir("tor_config", Context.MODE_PRIVATE);
         File torrcFile = new File(torrc, "torrc");
         File cookieFile = new File(torDir, "control_auth_cookie");
         
@@ -218,12 +219,8 @@ public class MainActivity extends AppCompatActivity {
         
         if (bridgeLine != null && !bridgeLine.trim().isEmpty()) {
             // 1. Указываем директорию для кэша ключей моста (эквивалент Kotlin-кода из Readme)
-            IPtProxy.setStateLocation(ptDir.getAbsolutePath());
-            
-            // 2. Запускаем встроенный прокси-сервер. 
-            // В новых версиях obfs4 переименовали в Lyrebird.
-            // Если метод не найдется, замени startLyrebird на startObfs4Proxy
-            obfsPort = (int) IPtProxy.startLyrebird("NOTICE", false, false, "");
+            // Передаем путь ptDir.getAbsolutePath() четвертым аргументом
+obfsPort = (int) IPtProxy.startObfs4Proxy("NOTICE", false, false, ptDir.getAbsolutePath());
         }
 
         StringBuilder config = new StringBuilder();
@@ -440,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
             
             // Выключаем локальный прокси моста (IPtProxy)
             try {
-                IPtProxy.stopLyrebird(); // если метод не найден, используй stopObfs4Proxy()
+                IPtProxy.stopObfs4Proxy(); // если метод не найден, используй stopObfs4Proxy()
             } catch (Throwable ignored) {}
             
             // Переходим к извлечению кода (IMAP/App/Браузер)
@@ -673,7 +670,7 @@ public class MainActivity extends AppCompatActivity {
         // Останавливаем все фоновые процессы Tor
         stopService(new Intent(this, org.torproject.jni.TorService.class));
         try {
-            IPtProxy.stopLyrebird(); 
+            IPtProxy.stopObfs4Proxy(); 
         } catch (Throwable ignored) {}
         
         executor.shutdownNow();
