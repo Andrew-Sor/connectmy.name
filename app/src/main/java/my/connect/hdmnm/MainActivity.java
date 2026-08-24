@@ -64,6 +64,8 @@ import javax.mail.search.SearchTerm;
 import net.freehaven.tor.control.TorControlConnection;
 import net.freehaven.tor.control.EventHandler;
 
+import IPtProxy.IPtProxy;
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvLog;
@@ -172,8 +174,13 @@ public class MainActivity extends AppCompatActivity {
         currentState = State.IDLE;
         updateUiState(false);
         
-        // Останавливаем службу Tor принудительно
+        // Останавливаем службу Tor
         stopService(new Intent(this, org.torproject.jni.TorService.class));
+        
+        // Останавливаем IPtProxy
+        try {
+            IPtProxy.stopLyrebird(); // или stopObfs4Proxy()
+        } catch (Throwable ignored) {}
         
         if (tvLog.getText().toString().contains("Успешно!")) {
             incrementEmailIndex();
@@ -201,15 +208,23 @@ public class MainActivity extends AppCompatActivity {
 
     private File buildTorrc(String bridgeLine) throws IOException {
         File torDir = getDir("tordata", MODE_PRIVATE);
-        File torrcFile = new File(torDir, "torrc");
+        File torrcFile = new File(torrc, "torrc");
         File cookieFile = new File(torDir, "control_auth_cookie");
         
-        // Создаем рабочую директорию для obfs4
         File ptDir = new File(torDir, "pt_state");
         if (!ptDir.exists()) ptDir.mkdirs();
 
-        String nativeDir = getApplicationInfo().nativeLibraryDir;
-        File obfs4Proxy = new File(nativeDir, "libobfs4proxy.so");
+        int obfsPort = 0;
+        
+        if (bridgeLine != null && !bridgeLine.trim().isEmpty()) {
+            // 1. Указываем директорию для кэша ключей моста (эквивалент Kotlin-кода из Readme)
+            IPtProxy.setStateLocation(ptDir.getAbsolutePath());
+            
+            // 2. Запускаем встроенный прокси-сервер. 
+            // В новых версиях obfs4 переименовали в Lyrebird.
+            // Если метод не найдется, замени startLyrebird на startObfs4Proxy
+            obfsPort = (int) IPtProxy.startLyrebird("NOTICE", false, false, "");
+        }
 
         StringBuilder config = new StringBuilder();
         config.append("DataDirectory ").append(torDir.getAbsolutePath()).append("\n");
@@ -218,24 +233,18 @@ public class MainActivity extends AppCompatActivity {
         config.append("CookieAuthentication 1\n");
         config.append("CookieAuthFile ").append(cookieFile.getAbsolutePath()).append("\n");
         
-        // Включаем подробный лог Tor в файл
         File logFile = new File(torDir, "tor_log.txt");
         config.append("Log notice file ").append(logFile.getAbsolutePath()).append("\n");
 
-        if (bridgeLine != null && !bridgeLine.trim().isEmpty()) {
+        if (bridgeLine != null && !bridgeLine.trim().isEmpty() && obfsPort > 0) {
             config.append("UseBridges 1\n");
-            // Прописываем путь к плагину. Если extractNativeLibs сработает, файл будет тут
-            config.append("ClientTransportPlugin obfs4 exec ").append(obfs4Proxy.getAbsolutePath()).append("\n");
+            // 3. Вместо exec, говорим Tor'у идти на открытый локальный порт IPtProxy
+            config.append("ClientTransportPlugin obfs4 socks5 127.0.0.1:").append(obfsPort).append("\n");
             config.append("Bridge ").append(bridgeLine.trim()).append("\n");
         }
 
         try (FileOutputStream fos = new FileOutputStream(torrcFile)) {
             fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
-        }
-        
-        // Предупреждение в наш UI лог, если библиотека не распаковалась
-        if (bridgeLine != null && !bridgeLine.trim().isEmpty() && !obfs4Proxy.exists()) {
-            mainHandler.post(() -> appendLog("ВНИМАНИЕ: Файл " + obfs4Proxy.getName() + " не найден в системе!"));
         }
 
         return torrcFile;
@@ -423,12 +432,18 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
 
         if (html.contains("Перейти в почтовый ящик")) {
-            appendLog("Успешно! Отключение Tor...");
+            appendLog("Успешно! Отключение Tor и моста...");
             prefs.edit().putString("success_date_time", LocalDateTime.now().toString()).apply();
             
-            // Выключаем встроенный Tor перед парсингом почты
+            // Выключаем встроенный Tor
             stopService(new Intent(this, org.torproject.jni.TorService.class));
             
+            // Выключаем локальный прокси моста (IPtProxy)
+            try {
+                IPtProxy.stopLyrebird(); // если метод не найден, используй stopObfs4Proxy()
+            } catch (Throwable ignored) {}
+            
+            // Переходим к извлечению кода (IMAP/App/Браузер)
             startExtractionFlow();
 
         } else if (html.contains("Тестовый доступ")) {
@@ -440,8 +455,8 @@ public class MainActivity extends AppCompatActivity {
             attemptCount++;
             appendLog(String.format("Неизвестный ответ! Попытка %d, почта %s...", attemptCount, Emails[getEmailIndex()]));
             mainHandler.postDelayed(this::executePostRequest, 2000);
-        };
-    };
+        }
+    }
 
     // Весь старый код из onResume переехал сюда
     private void startExtractionFlow() {
@@ -655,9 +670,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Останавливаем все фоновые процессы Tor
         stopService(new Intent(this, org.torproject.jni.TorService.class));
+        try {
+            IPtProxy.stopLyrebird(); 
+        } catch (Throwable ignored) {}
+        
         executor.shutdownNow();
-        mainHandler.removeCallbacksAndMessages(null); 
+        mainHandler.removeCallbacksAndMessages(null);
     }
     
     private void checkFirstRun() {
