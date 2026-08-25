@@ -65,7 +65,7 @@ public class SettingsActivity extends AppCompatActivity {
     // Дополнительные настройки
     private MaterialSwitch swLauncherMode;
     private MaterialSwitch swExitOnEnd;
-    private TextView tvDebugLaunchMode;
+    private TextView tvDebugLauncherMode;
     
     // Настройки для разработчиков
     private TextView tvCurrentIndex;
@@ -125,7 +125,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnExportSettings = findViewById(R.id.btnExportSettings);
         swLauncherMode = findViewById(R.id.swLauncherMode);
         swExitOnEnd = findViewById(R.id.swExitOnEnd);
-        tvDebugLaunchMode = findViewById(R.id.tvDebugLaunchMode);
+        tvDebugLauncherMode = findViewById(R.id.tvDebugLauncherMode);
 
         // Лаунчер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
@@ -349,7 +349,7 @@ public class SettingsActivity extends AppCompatActivity {
         updateTvCurrentIndex();
         swLauncherMode.setChecked(prefs.getBoolean("launcher_mode", false));
         swExitOnEnd.setChecked(prefs.getBoolean("exit_on_end", true));
-        tvDebugLaunchMode.setText("Послед. проб. период: " + prefs.getString("success_date_time", "пусто") + "; сейчас: " + LocalDateTime.now() + "; прошли сутки: " + (Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60));
+        tvDebugLauncherMode.setText("Послед. проб. период: " + prefs.getString("success_date_time", "пусто") + "; сейчас: " + LocalDateTime.now() + "; прошли сутки: " + (Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60));
     };
 
     @Override
