@@ -349,7 +349,7 @@ public class SettingsActivity extends AppCompatActivity {
         updateTvCurrentIndex();
         swLauncherMode.setChecked(prefs.getBoolean("launcher_mode", false));
         swExitOnEnd.setChecked(prefs.getBoolean("exit_on_end", true));
-        tvDebugLauncherMode.setText("Послед. проб. период: " + prefs.getString("success_date_time", "пусто") + "; сейчас: " + LocalDateTime.now() + "; прошли сутки: " + (Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60));
+        tvDebugLauncherMode.setText("Послед. проб. период: " + prefs.getString("success_date_time", "пусто") + "; сейчас: " + LocalDateTime.now() + "; прошли сутки: " + !(Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60));
     };
 
     @Override
