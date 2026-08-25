@@ -441,7 +441,7 @@
 />
 
                     <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/tvDebugkLauncherMode"
+                        android:id="@+id/tvDebugLauncherMode"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Последний пробный период: ; сейчас: ; прошло сутки: ;"
