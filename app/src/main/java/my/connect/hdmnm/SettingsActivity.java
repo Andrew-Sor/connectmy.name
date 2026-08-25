@@ -19,6 +19,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import androidx.activity.OnBackPressedCallback;
@@ -63,6 +65,7 @@ public class SettingsActivity extends AppCompatActivity {
     // Дополнительные настройки
     private MaterialSwitch swLauncherMode;
     private MaterialSwitch swExitOnEnd;
+    private TextView tvDebugLaunchMode;
     
     // Настройки для разработчиков
     private TextView tvCurrentIndex;
@@ -122,6 +125,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnExportSettings = findViewById(R.id.btnExportSettings);
         swLauncherMode = findViewById(R.id.swLauncherMode);
         swExitOnEnd = findViewById(R.id.swExitOnEnd);
+        tvDebugLaunchMode = findViewById(R.id.tvDebugLaunchMode);
 
         // Лаунчер для сохранения файла
         exportLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/octet-stream"), uri -> {
@@ -345,6 +349,7 @@ public class SettingsActivity extends AppCompatActivity {
         updateTvCurrentIndex();
         swLauncherMode.setChecked(prefs.getBoolean("launcher_mode", false));
         swExitOnEnd.setChecked(prefs.getBoolean("exit_on_end", true));
+        tvDebugLaunchMode.setText("Послед. проб. период: " + prefs.getString("success_date_time", "пусто") + "; сейчас: " + LocalDateTime.now() + "; прошли сутки: " + (Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60));
     };
 
     @Override

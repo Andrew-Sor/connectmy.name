@@ -615,7 +615,7 @@ public class MainActivity extends AppCompatActivity {
         
         if(prefs.getBoolean("launcher_mode", false) && successDateTime != null) {
             LocalDateTime succesDay = LocalDateTime.parse(successDateTime);
-            if(Duration.between(succesDay, LocalDateTime.now()).toMinutes() <= 24*60) {
+            if(Duration.between(LocalDateTime.parse(prefs.getString("success_date_time", null)), LocalDateTime.now()).toMinutes() <= 24*60) {
                 openApp("com.fourksoft.openvpn");
             }
         }

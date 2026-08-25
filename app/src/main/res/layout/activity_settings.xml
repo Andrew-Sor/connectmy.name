@@ -440,6 +440,16 @@
                         android:fontFamily="google-sans"
 />
 
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/tvDebugkLauncherMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Последний пробный период: ; сейчас: ; прошло сутки: ;"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:fontFamily="google-sans"
+/>
+
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/swExitOnEnd"
                         android:layout_width="wrap_content"
