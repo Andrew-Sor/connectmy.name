@@ -1,9 +1,9 @@
 [versions]
-agp = "9.3.1"
-core = "1.17.0"
-appcompat = "1.7.1"
-material = "1.13.0"
-constraintlayout = "2.2.1"
+agp = "9.3.2"
+core = "1.19.0"
+appcompat = "1.8.0"
+material = "1.14.0"
+constraintlayout = "2.2.2"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
