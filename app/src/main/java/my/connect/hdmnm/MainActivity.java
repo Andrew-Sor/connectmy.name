@@ -42,7 +42,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import androidx.appcompat.widget.PopupMenu; 
+import androidx.appcompat.widget.PopupMenu;
 
 // Импорты JavaMail API
 import javax.mail.Flags;
