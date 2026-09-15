@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.HDMNM" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Включение динамических цветов на Android 12+ -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor"></item>
         <item name="android:fontFamily">google-sans</item>
     </style>
+    <style name="AppTheme" parent="Base.AppTheme" />
 </resources>
