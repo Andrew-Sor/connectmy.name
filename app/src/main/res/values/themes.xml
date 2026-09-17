@@ -1,8 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor"></item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:fontFamily">google-sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
     <style name="AppTheme" parent="Base.AppTheme" />
 </resources>
